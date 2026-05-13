@@ -6,7 +6,8 @@
   "license": "MIT",
   "keywords": ["pi-package", "pi-coding-agent", "cdp", "browser"],
   "pi": {
-    "extensions": ["./extensions"]
+    "extensions": ["./extensions"],
+    "image": "./logo.png"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
