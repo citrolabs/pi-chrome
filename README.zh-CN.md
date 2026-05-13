@@ -2,9 +2,11 @@
 
 [![CI](https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg)](#validation) [![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)](./package.json)
 
-Pi 的 CDP 浏览器执行扩展：把 BrowserCode 风格的 `browser_execute` 带到 `pi-coding-agent`，让 Pi 直接连接 Chromium/Chrome DevTools Protocol，执行 JS、驱动页面、读取 DOM、截图并把截图作为图片结果返回。
+这是一个为 Pi 提供 CDP 浏览器执行能力的扩展。它把 BrowserCode 风格的 `browser_execute` 工具带到 `pi-coding-agent`，让 Pi 可以通过 Chrome DevTools Protocol 连接 Chromium/Chrome，执行 JavaScript、驱动页面、读取 DOM、截图，并把截图作为图片结果返回。
 
-> 和普通 Playwright/Puppeteer 不同：它不是单独的浏览器测试框架，也不托管 daemon。它是 Pi 扩展工具，复用 Pi 会话中的持久 CDP session，适合让 coding agent 在任务中临时操作你授权的真实浏览器。
+这个项目的出发点很直接：`pi-coding-agent` 很适合处理代码任务，但框架本身不提供内置的 web search 或浏览器访问能力。这个扩展为 Pi 提供一个小而明确的入口，让 agent 在任务需要时可以使用由用户授权的真实浏览器。
+
+它不是独立的浏览器测试框架，也不托管 daemon；它是一个 Pi 扩展，会复用 Pi 进程里的持久 CDP session。
 
 English: [README.md](./README.md)
 
@@ -95,6 +97,14 @@ npm test
 ```
 
 当前测试覆盖包括：session 复用/隔离、workspace import、console streaming、timeout、screenshot 收集、CDP target 过滤、active sessionId 路由、Pi image content 转换。
+
+## 致谢
+
+这个项目的设计思路受到以下项目启发：
+
+- [browser-use/browser-harness](https://github.com/browser-use/browser-harness)
+- [browser-use/browsercode](https://github.com/browser-use/browsercode)
+- [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
 
 ## Star History
 

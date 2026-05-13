@@ -2,9 +2,11 @@
 
 [![CI](https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg)](#validation) [![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)](./package.json)
 
-CDP browser execution extension for Pi. It brings a BrowserCode-style `browser_execute` tool to `pi-coding-agent`, so Pi can connect directly to Chromium/Chrome DevTools Protocol, run JavaScript, drive pages, inspect the DOM, capture screenshots, and return screenshots as image results.
+A CDP-powered browser execution extension for Pi. It adds a BrowserCode-style `browser_execute` tool to `pi-coding-agent`, allowing Pi to connect to Chromium/Chrome through the DevTools Protocol, run JavaScript, drive pages, inspect the DOM, capture screenshots, and return screenshots as image results.
 
-> Unlike Playwright or Puppeteer, this package is not a standalone browser testing framework and does not host a daemon. It is a Pi extension tool that reuses a persistent CDP session inside the Pi process, which is useful when a coding agent needs temporary access to a real browser you explicitly authorize.
+The motivation is simple: `pi-coding-agent` is excellent for code work, but it does not provide built-in web search or browser access. This project gives Pi a small, explicit bridge to a user-authorized browser, so an agent can work with live web pages when the task requires it.
+
+This is not a standalone browser testing framework and does not host a daemon. It is a Pi extension that reuses a persistent CDP session inside the Pi process.
 
 中文文档: [README.zh-CN.md](./README.zh-CN.md)
 
@@ -95,6 +97,14 @@ npm test
 ```
 
 Current tests cover session reuse/isolation, workspace imports, console streaming, timeout handling, screenshot collection, CDP target filtering, active `sessionId` routing, and Pi image content conversion.
+
+## Acknowledgements
+
+The shape of this project was inspired by the following work:
+
+- [browser-use/browser-harness](https://github.com/browser-use/browser-harness)
+- [browser-use/browsercode](https://github.com/browser-use/browsercode)
+- [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
 
 ## Star History
 
