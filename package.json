@@ -4,10 +4,18 @@
   "description": "Pi coding-agent extension exposing BrowserCode CDP browser_execute",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/citrolabs/pi-browser-cdp-extension.git"
+  },
+  "homepage": "https://github.com/citrolabs/pi-browser-cdp-extension#readme",
+  "bugs": {
+    "url": "https://github.com/citrolabs/pi-browser-cdp-extension/issues"
+  },
   "keywords": ["pi-package", "pi-coding-agent", "cdp", "browser"],
   "pi": {
     "extensions": ["./extensions"],
-    "image": "./logo.png"
+    "image": "https://raw.githubusercontent.com/citrolabs/pi-browser-cdp-extension/main/logo.png"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
