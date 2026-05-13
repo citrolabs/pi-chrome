@@ -1,6 +1,15 @@
-# pi-browser-cdp-extension 中文文档
-
-[![CI](https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg)](#validation) [![Version](https://img.shields.io/badge/version-0.1.0-informational.svg)](./package.json)
+<div align="center">
+  <h1>pi-browser-cdp-extension</h1>
+  <p>让 Pi agent 操控真实浏览器的 CDP 执行扩展。</p>
+  <p>
+    <a href="https://www.npmjs.com/package/pi-browser-cdp-extension"><img alt="npm version" src="https://img.shields.io/npm/v/pi-browser-cdp-extension.svg"></a>
+    <a href="./package.json"><img alt="Pi package" src="https://img.shields.io/badge/Pi-package-6f42c1.svg"></a>
+    <a href="./package.json"><img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D20.6.0-339933.svg"></a>
+    <a href="#validation"><img alt="CI" src="https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg"></a>
+    <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+    <a href="https://github.com/citrolabs/pi-browser-cdp-extension"><img alt="GitHub stars" src="https://img.shields.io/github/stars/citrolabs/pi-browser-cdp-extension.svg?style=social"></a>
+  </p>
+</div>
 
 这是一个为 Pi 提供 CDP 浏览器执行能力的扩展。它把 BrowserCode 风格的 `browser_execute` 工具带到 `pi-coding-agent`，让 Pi 可以通过 Chrome DevTools Protocol 连接 Chromium/Chrome，执行 JavaScript、驱动页面、读取 DOM、截图，并把截图作为图片结果返回。
 
