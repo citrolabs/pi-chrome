@@ -24,34 +24,15 @@ For local development:
 pi install .
 ```
 
-### 2. Start Chrome with CDP enabled
+After installation, talk to Pi normally and ask it to use the browser. Pi can call the extension's `browser_execute` tool when it needs to operate a real page.
 
-```bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-  --remote-debugging-port=9222 \
-  --user-data-dir="$(pwd)/.pi/chrome-data-dir"
+Example:
+
+```text
+Open https://example.com in the browser, tell me the page title, and return a screenshot.
 ```
 
-### 3. Use `browser_execute` in Pi
-
-```js
-await session.connect({ wsUrl: "ws://127.0.0.1:9222/devtools/browser/<id>" })
-const targets = (await session.Target.getTargets({})).targetInfos
-const page = targets.find(t => t.type === "page" && !t.url.startsWith("chrome://"))
-await session.use(page.targetId)
-await session.Page.enable()
-await session.Page.navigate({ url: "https://example.com" })
-await session.waitFor("Page.loadEventFired")
-await session.Page.captureScreenshot({ format: "png" })
-```
-
-If you do not know the `<id>`, open:
-
-```bash
-curl http://127.0.0.1:9222/json/version
-```
-
-Then copy the returned `webSocketDebuggerUrl`.
+Pi will connect to an authorized Chromium browser, drive the page, inspect the result, and attach the screenshot.
 
 ## What it gives Pi
 
@@ -60,6 +41,16 @@ Then copy the returned `webSocketDebuggerUrl`.
 - `console`: captures `log`, `error`, `warn`, `info`, and `debug` output and streams it back in the tool result.
 - Screenshot collection: successful `Page.captureScreenshot` calls are automatically converted into Pi image content.
 - Workspace support: reusable scripts can live in `.pi/browser-execute-workspace` and be loaded from snippets with `await import(...)`.
+
+## Compared with web search tools
+
+Popular Pi web-search packages such as `pi-web-access` and `@ollama/pi-web-search` are optimized for search, fetch, and text extraction. This extension is optimized for controlling a real browser.
+
+| Project | Primary focus | Where this extension is stronger |
+| --- | --- | --- |
+| `pi-web-access` | Broad web research: search, URL fetching, GitHub repo cloning, PDFs, YouTube, and local video analysis. | Real browser operation: click, type, navigate, inspect live DOM state, reuse login sessions and extensions, and return screenshots from the actual page. |
+| `@ollama/pi-web-search` | Lightweight search and fetch through Ollama's web APIs. | Provider-independent CDP control: Pi can drive an authorized Chromium browser directly instead of depending on one search/fetch backend. |
+| `pi-browser-cdp-extension` | Browser execution through Chrome DevTools Protocol. | Best fit when the task needs interaction, authenticated pages, browser-only behavior, visual verification, or persistent page state across steps. |
 
 ## Who should use this
 

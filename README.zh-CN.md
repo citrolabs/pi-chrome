@@ -24,34 +24,15 @@ pi install git:github.com/citrolabs/pi-browser-cdp-extension
 pi install .
 ```
 
-### 2. 启动带 CDP 的 Chrome
+安装完成后，正常和 Pi 对话，让它使用浏览器即可。需要操作真实页面时，Pi 会调用扩展提供的 `browser_execute` 工具。
 
-```bash
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-  --remote-debugging-port=9222 \
-  --user-data-dir="$(pwd)/.pi/chrome-data-dir"
+例如：
+
+```text
+打开 https://example.com，告诉我页面标题，并返回一张截图。
 ```
 
-### 3. 在 Pi 里使用 `browser_execute`
-
-```js
-await session.connect({ wsUrl: "ws://127.0.0.1:9222/devtools/browser/<id>" })
-const targets = (await session.Target.getTargets({})).targetInfos
-const page = targets.find(t => t.type === "page" && !t.url.startsWith("chrome://"))
-await session.use(page.targetId)
-await session.Page.enable()
-await session.Page.navigate({ url: "https://example.com" })
-await session.waitFor("Page.loadEventFired")
-await session.Page.captureScreenshot({ format: "png" })
-```
-
-如果不知道 `<id>`，先打开：
-
-```bash
-curl http://127.0.0.1:9222/json/version
-```
-
-复制返回里的 `webSocketDebuggerUrl`。
+Pi 会连接已授权的 Chromium 浏览器，打开页面、读取结果，并把截图附在回复里。
 
 ## 给 Pi 提供什么
 
@@ -60,6 +41,16 @@ curl http://127.0.0.1:9222/json/version
 - `console`：捕获 `log/error/warn/info/debug`，作为工具输出流式返回。
 - 截图收集：成功的 `Page.captureScreenshot` 会自动转成 Pi image content。
 - Workspace：可复用脚本放在 `.pi/browser-execute-workspace`，snippet 里用 `await import(...)` 加载。
+
+## 和 web search 工具对比
+
+`pi-web-access`、`@ollama/pi-web-search` 这类热门 Pi web-search 包，核心能力是搜索、抓取和文本提取。这个扩展的重点不是再做一个搜索接口，而是让 Pi 操控真实浏览器。
+
+| 项目 | 核心定位 | 这个扩展的优势 |
+| --- | --- | --- |
+| `pi-web-access` | 综合 web research：搜索、URL 抓取、GitHub repo clone、PDF、YouTube 和本地视频分析。 | 真实浏览器操作：点击、输入、跳转、读取 live DOM 状态、复用登录态和浏览器扩展，并返回真实页面截图。 |
+| `@ollama/pi-web-search` | 基于 Ollama web API 的轻量搜索和网页抓取。 | 不绑定单一搜索/抓取后端；Pi 可以直接通过 CDP 操控已授权的 Chromium 浏览器。 |
+| `pi-browser-cdp-extension` | 通过 Chrome DevTools Protocol 执行浏览器操作。 | 适合需要交互、登录态、浏览器真实行为、视觉验证、以及跨步骤持久页面状态的任务。 |
 
 ## 适用场景
 
