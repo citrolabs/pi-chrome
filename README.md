@@ -42,15 +42,22 @@ Pi will connect to an authorized Chromium browser, drive the page, inspect the r
 - Screenshot collection: successful `Page.captureScreenshot` calls are automatically converted into Pi image content.
 - Workspace support: reusable scripts can live in `.pi/browser-execute-workspace` and be loaded from snippets with `await import(...)`.
 
-## Compared with web search tools
+## Why not just web search?
 
-Popular Pi web-search packages such as `pi-web-access` and `@ollama/pi-web-search` are optimized for search, fetch, and text extraction. This extension is optimized for controlling a real browser.
+Web-search tools help Pi find and summarize information. `pi-browser-cdp-extension` gives Pi hands-on control of a real Chromium browser, so it can complete tasks that search/fetch tools cannot represent as plain text.
 
-| Project | Primary focus | Where this extension is stronger |
+| Capability | `pi-web-access` / `@ollama/pi-web-search` | `pi-browser-cdp-extension` |
 | --- | --- | --- |
-| `pi-web-access` | Broad web research: search, URL fetching, GitHub repo cloning, PDFs, YouTube, and local video analysis. | Real browser operation: click, type, navigate, inspect live DOM state, reuse login sessions and extensions, and return screenshots from the actual page. |
-| `@ollama/pi-web-search` | Lightweight search and fetch through Ollama's web APIs. | Provider-independent CDP control: Pi can drive an authorized Chromium browser directly instead of depending on one search/fetch backend. |
-| `pi-browser-cdp-extension` | Browser execution through Chrome DevTools Protocol. | Best fit when the task needs interaction, authenticated pages, browser-only behavior, visual verification, or persistent page state across steps. |
+| Search the public web | Strong fit | Not the primary goal |
+| Fetch and summarize static pages | Strong fit | Possible, but usually overkill |
+| Click buttons, type into forms, and follow UI flows | Limited or unavailable | Native browser automation through CDP |
+| Use authenticated sessions | Usually requires API-level access or copied cookies | Reuses the user's authorized browser profile/session |
+| Work with browser extensions and real browser behavior | No | Yes, because Pi drives the actual browser |
+| Inspect dynamic DOM state after JavaScript runs | Limited to fetched HTML or rendered text | Direct live DOM and DevTools Protocol access |
+| Verify what the user would actually see | Text-first | Screenshots returned as Pi image results |
+| Keep state across multiple agent steps | Tool/backend dependent | Persistent CDP session inside the Pi process |
+
+Use web-search packages when the task is "find information." Use this extension when the task is "operate the website."
 
 ## Who should use this
 

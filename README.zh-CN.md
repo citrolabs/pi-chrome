@@ -42,15 +42,22 @@ Pi 会连接已授权的 Chromium 浏览器，打开页面、读取结果，并�
 - 截图收集：成功的 `Page.captureScreenshot` 会自动转成 Pi image content。
 - Workspace：可复用脚本放在 `.pi/browser-execute-workspace`，snippet 里用 `await import(...)` 加载。
 
-## 和 web search 工具对比
+## 为什么不只用 web search？
 
-`pi-web-access`、`@ollama/pi-web-search` 这类热门 Pi web-search 包，核心能力是搜索、抓取和文本提取。这个扩展的重点不是再做一个搜索接口，而是让 Pi 操控真实浏览器。
+Web-search 工具解决的是“帮 Pi 找资料、总结网页”。`pi-browser-cdp-extension` 解决的是“让 Pi 直接操控一个真实 Chromium 浏览器”，所以它能处理搜索/抓取工具很难表达成纯文本的任务。
 
-| 项目 | 核心定位 | 这个扩展的优势 |
+| 能力 | `pi-web-access` / `@ollama/pi-web-search` | `pi-browser-cdp-extension` |
 | --- | --- | --- |
-| `pi-web-access` | 综合 web research：搜索、URL 抓取、GitHub repo clone、PDF、YouTube 和本地视频分析。 | 真实浏览器操作：点击、输入、跳转、读取 live DOM 状态、复用登录态和浏览器扩展，并返回真实页面截图。 |
-| `@ollama/pi-web-search` | 基于 Ollama web API 的轻量搜索和网页抓取。 | 不绑定单一搜索/抓取后端；Pi 可以直接通过 CDP 操控已授权的 Chromium 浏览器。 |
-| `pi-browser-cdp-extension` | 通过 Chrome DevTools Protocol 执行浏览器操作。 | 适合需要交互、登录态、浏览器真实行为、视觉验证、以及跨步骤持久页面状态的任务。 |
+| 搜索公开网页 | 很适合 | 不是主要目标 |
+| 抓取并总结静态页面 | 很适合 | 可以做，但通常没必要 |
+| 点击按钮、填写表单、走完整 UI 流程 | 受限或不支持 | 通过 CDP 原生操控浏览器 |
+| 使用登录态 | 通常依赖 API 权限或手动复制 cookie | 直接复用用户已授权的浏览器 session |
+| 使用浏览器扩展和真实浏览器行为 | 不支持 | 支持，因为 Pi 操控的就是实际浏览器 |
+| 读取 JavaScript 运行后的动态 DOM | 通常只能拿到抓取 HTML 或文本 | 直接访问 live DOM 和 DevTools Protocol |
+| 验证用户实际看到的页面 | 文本优先 | 截图会作为 Pi image result 返回 |
+| 跨多轮 agent 步骤保持状态 | 取决于工具/后端 | Pi 进程内持久 CDP session |
+
+任务是“找信息”时，用 web-search 包；任务是“操作网站”时，用这个扩展。
 
 ## 适用场景
 
