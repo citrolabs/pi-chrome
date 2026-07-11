@@ -42,6 +42,44 @@ const SCREENSHOT_FORMAT_TO_EXT: Record<string, string> = {
   webp: "webp",
 };
 
+// Concurrency-safe global process error interceptor state
+const activeCatchers = new Set<(error: unknown) => void>();
+let backupUncaught: any[] = [];
+let backupUnhandled: any[] = [];
+let isListening = false;
+
+const globalErrorHandler = (error: unknown) => {
+  for (const catcher of activeCatchers) {
+    try {
+      catcher(error);
+    } catch {
+      // Prevent catcher failures from breaking other catchers
+    }
+  }
+};
+
+function startGlobalListening() {
+  if (isListening) return;
+  isListening = true;
+  backupUncaught = process.listeners("uncaughtException");
+  backupUnhandled = process.listeners("unhandledRejection");
+  process.removeAllListeners("uncaughtException");
+  process.removeAllListeners("unhandledRejection");
+  process.on("uncaughtException", globalErrorHandler);
+  process.on("unhandledRejection", globalErrorHandler);
+}
+
+function stopGlobalListening() {
+  if (!isListening || activeCatchers.size > 0) return;
+  isListening = false;
+  process.off("uncaughtException", globalErrorHandler);
+  process.off("unhandledRejection", globalErrorHandler);
+  for (const l of backupUncaught) process.on("uncaughtException", l);
+  for (const l of backupUnhandled) process.on("unhandledRejection", l);
+  backupUncaught = [];
+  backupUnhandled = [];
+}
+
 const AsyncFunction = (async () => {}).constructor as new (...args: string[]) => (...injected: unknown[]) => Promise<unknown>;
 const dynamicImport = (specifier: string) => import(specifier);
 
@@ -137,18 +175,13 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
     }
   });
 
-  const backupUncaught = process.listeners("uncaughtException");
-  const backupUnhandled = process.listeners("unhandledRejection");
-  process.removeAllListeners("uncaughtException");
-  process.removeAllListeners("unhandledRejection");
-
   let snippetError: Error | null = null;
-  const errorHandler = (error: unknown) => {
+  const localCatcher = (error: unknown) => {
     snippetError = error instanceof Error ? error : new Error(String(error));
   };
 
-  process.on("uncaughtException", errorHandler);
-  process.on("unhandledRejection", errorHandler);
+  activeCatchers.add(localCatcher);
+  startGlobalListening();
 
   try {
     const timeoutMs = Math.min(args.timeout ?? DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS);
@@ -163,10 +196,8 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
     const finalError = snippetError ?? error;
     throw new Error(`browser_execute snippet threw: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
   } finally {
-    process.off("uncaughtException", errorHandler);
-    process.off("unhandledRejection", errorHandler);
-    for (const l of backupUncaught) process.on("uncaughtException", l);
-    for (const l of backupUnhandled) process.on("unhandledRejection", l);
+    activeCatchers.delete(localCatcher);
+    stopGlobalListening();
     unsubscribe();
   }
 }

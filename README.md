@@ -81,6 +81,28 @@ Do not use this for:
 - Pure unit testing; Playwright or Vitest is more direct.
 - Untrusted pages or untrusted CDP endpoints. CDP can control the connected browser, so only connect to browsers you authorize.
 
+## Auto-launching Chrome
+
+When you pass a `profileDir` to `browser_execute`, the extension can automatically launch Chrome if no browser with remote debugging is already connected.
+
+The tool accepts a `profileDir` parameter:
+
+```javascript
+await session.connect({
+  profileDir: '/home/user/.ds4/browser',
+  launchBrowser: true,
+});
+```
+
+The extension will:
+1. Create the profile directory if it doesn't exist
+2. Launch Chrome with `--remote-debugging-port=0 --user-data-dir=<profileDir> --no-first-run --no-default-browser-check`
+3. Wait for Chrome to write `DevToolsActivePort` and connect
+
+If the directory already has a Chrome instance running with remote debugging, it reuses that instance.
+
+To customize the Chrome executable path, set `BROWSER_PATH` or `CHROME_BIN` environment variable.
+
 ## Configuration
 
 Environment variables:

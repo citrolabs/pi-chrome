@@ -5,8 +5,9 @@
  * Connect with flatten:true so all sessions share one WebSocket.
  */
 
-import { readFile, stat } from "node:fs/promises";
+import { readFile, stat, mkdir } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
+import { spawn } from "node:child_process";
 import { bindDomains, type Domains, type Transport } from "./generated.js";
 
 type Pending = {
@@ -21,6 +22,8 @@ export type ConnectOptions = {
   profileDir?: string;
   /** Per-candidate WS-open timeout in ms. Default 5000. */
   timeoutMs?: number;
+  /** Launch Chrome with --user-data-dir=profileDir when no existing browser is detected. */
+  launchBrowser?: boolean;
 };
 
 export type DetectedBrowser = {
@@ -37,6 +40,7 @@ export class Session implements Transport {
   private nextId = 1;
   private pending = new Map<number, Pending>();
   private activeSessionId: string | undefined;
+  private chromeProcess?: import("node:child_process").ChildProcess;
   private eventListeners: Array<(method: string, params: unknown, sessionId?: string) => void> = [];
   private callResultListeners: Array<(method: string, params: unknown, result: unknown) => void> = [];
 
@@ -66,6 +70,11 @@ export class Session implements Transport {
 
     const browsers = await detectBrowsers();
     if (browsers.length === 0) {
+      if (opts.launchBrowser && opts.profileDir) {
+        const wsUrl = await this.launchChrome(opts.profileDir, timeoutMs);
+        await this.openWs(wsUrl, timeoutMs);
+        return;
+      }
       const scanned = getBrowserCandidates().map((candidate) => candidate.name).join(", ");
       throw new Error(
         `No running browser with remote debugging detected. Enable it from chrome://inspect > "Discover network targets", or pass { profileDir } / { wsUrl } explicitly. Scanned: ${scanned}.`,
@@ -131,6 +140,10 @@ export class Session implements Transport {
 
   close(): void {
     this.ws?.close();
+    if (this.chromeProcess) {
+      this.chromeProcess.kill();
+      this.chromeProcess = undefined;
+    }
   }
 
   async use(targetId: string): Promise<string> {
@@ -205,6 +218,92 @@ export class Session implements Transport {
       });
       this.ws?.send(JSON.stringify(msg));
     });
+  }
+
+  private async launchChrome(profileDir: string, timeoutMs: number): Promise<string> {
+    const chromePath = process.env.BROWSER_PATH ?? this.findChrome();
+    if (!chromePath) {
+      throw new Error("Chrome not found. Set BROWSER_PATH or install Chrome.");
+    }
+
+    await mkdir(profileDir, { recursive: true });
+
+    const child = spawn(chromePath, [
+      "--remote-debugging-port=0",
+      `--user-data-dir=${profileDir}`,
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+      "--disable-features=OptimizationGuideModelDownloading,OptimizationGuideFetching,OptimizationTargetPrediction,OptimizationHints",
+    ], {
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    this.chromeProcess = child;
+
+    const filePath = `${profileDir}/DevToolsActivePort`;
+    const deadline = Date.now() + timeoutMs;
+
+    return new Promise<string>((resolve, reject) => {
+      let lastErr = "unknown";
+
+      const poll = async () => {
+        try {
+          const text = (await readFile(filePath, "utf8")).trim();
+          const [portStr, path] = text.split("\n");
+          const port = Number(portStr);
+          if (!Number.isFinite(port)) {
+            lastErr = `malformed port: ${portStr}`;
+            if (Date.now() < deadline) setTimeout(poll, 250);
+            else reject(new Error(`Chrome started but no valid DevToolsActivePort: ${lastErr}`));
+            return;
+          }
+          if (!path || !path.startsWith("/devtools/")) {
+            lastErr = `invalid path: ${path}`;
+            if (Date.now() < deadline) setTimeout(poll, 250);
+            else reject(new Error(`Chrome started but bad DevToolsActivePort: ${lastErr}`));
+            return;
+          }
+          child.on("exit", () => {}); // ignore exit after successful connect
+          resolve(`ws://127.0.0.1:${port}${path}`);
+        } catch (err) {
+          lastErr = err instanceof Error ? err.message : String(err);
+          if (Date.now() < deadline) setTimeout(poll, 250);
+          else reject(new Error(`Chrome may have exited: ${lastErr}`));
+        }
+      };
+
+      (child.stdout ?? process.stdout).on("data", (chunk: Buffer) => {
+        const msg = String(chunk).trim();
+        if (msg) console.warn(`[chrome] ${msg}`);
+      });
+
+      (child.stderr ?? process.stderr).on("data", (chunk: Buffer) => {
+        const msg = String(chunk).trim();
+        if (msg) console.warn(`[chrome-stderr] ${msg}`);
+      });
+
+      child.on("exit", (code) => {
+        if (code !== 0) {
+          reject(new Error(`Chrome exited with code ${code ?? "null"}`));
+        }
+      });
+
+      poll();
+    });
+  }
+
+  private findChrome(): string | undefined {
+    switch (process.platform) {
+      case "darwin": return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+      case "linux": return process.env.CHROME_BIN ?? "/usr/bin/google-chrome";
+      case "win32": {
+        const local = process.env.LOCALAPPDATA ?? "";
+        return local ? `${local}\\Google\\Chrome\\Application\\chrome.exe` : undefined;
+      }
+    }
+    return undefined;
   }
 
   private onMessage(raw: string): void {
