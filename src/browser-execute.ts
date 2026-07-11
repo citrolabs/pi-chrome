@@ -14,6 +14,8 @@ export type BrowserExecuteParameters = {
 export type ExecuteContext = {
   sessionID: string;
   workspaceDir: string;
+  profileDir: string | undefined;
+  launchBrowser: boolean | undefined;
   onChunk?: (output: string) => void;
 };
 
@@ -79,6 +81,15 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
   const session = SessionStore.get(ctx.sessionID);
   await mkdir(ctx.workspaceDir, { recursive: true });
 
+  // Auto-connect if profileDir is provided
+  if (ctx.profileDir && !session.isConnected()) {
+    await session.connect({
+      profileDir: ctx.profileDir,
+      launchBrowser: ctx.launchBrowser ?? true,
+      timeoutMs: args.timeout ?? DEFAULT_TIMEOUT_MS,
+    });
+  }
+
   let wrapped: (...injected: unknown[]) => Promise<unknown>;
   try {
     wrapped = new AsyncFunction("session", "console", "__import", args.code.replaceAll("import(", "__import("));
@@ -126,13 +137,34 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
     }
   });
 
+  const backupUncaught = process.listeners("uncaughtException");
+  const backupUnhandled = process.listeners("unhandledRejection");
+  process.removeAllListeners("uncaughtException");
+  process.removeAllListeners("unhandledRejection");
+
+  let snippetError: Error | null = null;
+  const errorHandler = (error: unknown) => {
+    snippetError = error instanceof Error ? error : new Error(String(error));
+  };
+
+  process.on("uncaughtException", errorHandler);
+  process.on("unhandledRejection", errorHandler);
+
   try {
     const timeoutMs = Math.min(args.timeout ?? DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS);
     const ran = await Promise.race([wrapped(session, snippetConsole, dynamicImport), timeoutSignal(timeoutMs)]);
+    if (snippetError) {
+      throw snippetError;
+    }
     return { output, result: serialize(ran), screenshots };
   } catch (error) {
-    throw new Error(`browser_execute snippet threw: ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
+    const finalError = snippetError ?? error;
+    throw new Error(`browser_execute snippet threw: ${finalError instanceof Error ? finalError.stack ?? finalError.message : String(finalError)}`);
   } finally {
+    process.off("uncaughtException", errorHandler);
+    process.off("unhandledRejection", errorHandler);
+    for (const l of backupUncaught) process.on("uncaughtException", l);
+    for (const l of backupUnhandled) process.on("unhandledRejection", l);
     unsubscribe();
   }
 }
