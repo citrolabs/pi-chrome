@@ -161,7 +161,7 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
   } catch (error) {
     await new Promise((resolve) => setImmediate(resolve));
     const finalError = snippetError ?? error;
-    throw new Error(`browser_execute snippet threw: ${finalError instanceof Error ? finalError.stack ?? finalError.message : String(finalError)}`);
+    throw new Error(`browser_execute snippet threw: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
   } finally {
     process.off("uncaughtException", errorHandler);
     process.off("unhandledRejection", errorHandler);

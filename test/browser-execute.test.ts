@@ -241,7 +241,7 @@ describe("browser_execute core", () => {
     ).rejects.toThrow(/syntax error in browser_execute snippet/);
   });
 
-  it("surfaces runtime failures with stack context", async () => {
+  it("surfaces runtime failures with clean error messages", async () => {
     const workspaceDir = await tmp("pi-browser-workspace-");
     await expect(
       executeBrowserCode(
@@ -251,7 +251,7 @@ describe("browser_execute core", () => {
         },
         { sessionID: trackSession("runtime-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
       ),
-    ).rejects.toThrow(/browser_execute snippet threw: .*runtime-boom/s);
+    ).rejects.toThrow(/browser_execute snippet threw: runtime-boom/);
   });
 
   it("times out snippets that yield", async () => {
