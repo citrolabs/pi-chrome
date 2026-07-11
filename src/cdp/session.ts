@@ -418,6 +418,9 @@ export async function listPageTargets(session: Session): Promise<PageTarget[]> {
   return targetInfos.filter((target) => target.type === "page" && !target.url.startsWith("chrome://") && !target.url.startsWith("devtools://"));
 }
 
+// Common fixed remote-debugging ports to try when DevToolsActivePort is not found.
+const FIXED_DEBUGGING_PORTS = [9333, 9222, 9223, 9323, 9330, 9331];
+
 export async function detectBrowsers(): Promise<DetectedBrowser[]> {
   const candidates = getBrowserCandidates();
   const detected: DetectedBrowser[] = [];
@@ -433,6 +436,26 @@ export async function detectBrowsers(): Promise<DetectedBrowser[]> {
       wsUrl: `ws://127.0.0.1:${parsed.port}${parsed.path}`,
       mtimeMs: parsed.mtimeMs,
     });
+  }
+
+  // Fallback: try common fixed ports by fetching /json/version.
+  for (const port of FIXED_DEBUGGING_PORTS) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/json/version`);
+      if (res.ok) {
+        const ver = (await res.json()) as { webSocketDebuggerUrl: string };
+        detected.push({
+          name: `Chrome/Chromium @ port ${port}`,
+          profileDir: "",
+          port,
+          wsPath: new URL(ver.webSocketDebuggerUrl).pathname,
+          wsUrl: ver.webSocketDebuggerUrl,
+          mtimeMs: 0,
+        });
+      }
+    } catch {
+      // Port not open or browser not running — skip.
+    }
   }
 
   detected.sort((a, b) => b.mtimeMs - a.mtimeMs);
