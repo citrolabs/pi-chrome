@@ -9,6 +9,7 @@ import { readFile, stat, mkdir } from "node:fs/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import { spawn } from "node:child_process";
 import { bindDomains, type Domains, type Transport } from "./generated.js";
+import path from "node:path";
 
 type Pending = {
   resolve: (value: unknown) => void;
@@ -56,7 +57,28 @@ export class Session implements Transport {
   async connect(opts: ConnectOptions = {}): Promise<void> {
     const timeoutMs = opts.timeoutMs ?? 5_000;
 
-    if (opts.wsUrl || opts.profileDir) {
+    if (opts.wsUrl) {
+      await this.openWs(opts.wsUrl, timeoutMs);
+      return;
+    }
+
+    if (opts.profileDir) {
+      const parsed = await tryReadDevToolsActivePort(opts.profileDir);
+      if (parsed) {
+        try {
+          await this.openWs(`ws://127.0.0.1:${parsed.port}${parsed.path}`, timeoutMs);
+          return;
+        } catch {
+          // Fall through to launch if connection failed
+        }
+      }
+
+      if (opts.launchBrowser) {
+        const wsUrl = await this.launchChrome(opts.profileDir, timeoutMs);
+        await this.openWs(wsUrl, timeoutMs);
+        return;
+      }
+
       const wsUrl = await resolveWsUrl(opts, timeoutMs);
       await this.openWs(wsUrl, timeoutMs);
       return;
@@ -69,31 +91,33 @@ export class Session implements Transport {
     }
 
     const browsers = await detectBrowsers();
-    if (browsers.length === 0) {
-      if (opts.launchBrowser && opts.profileDir) {
-        const wsUrl = await this.launchChrome(opts.profileDir, timeoutMs);
-        await this.openWs(wsUrl, timeoutMs);
-        return;
+    if (browsers.length > 0) {
+      const errors: string[] = [];
+      for (const browser of browsers) {
+        try {
+          await this.openWs(browser.wsUrl, timeoutMs);
+          return;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          errors.push(`  ${browser.name} @ ${browser.wsUrl}: ${message}`);
+        }
       }
-      const scanned = getBrowserCandidates().map((candidate) => candidate.name).join(", ");
       throw new Error(
-        `No running browser with remote debugging detected. Enable it from chrome://inspect > "Discover network targets", or pass { profileDir } / { wsUrl } explicitly. Scanned: ${scanned}.`,
+        `No detected browser accepted a connection. If one of these is the browser you want, click "Allow" on its remote-debugging prompt and retry:\n${errors.join("\n")}`,
       );
     }
 
-    const errors: string[] = [];
-    for (const browser of browsers) {
-      try {
-        await this.openWs(browser.wsUrl, timeoutMs);
-        return;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        errors.push(`  ${browser.name} @ ${browser.wsUrl}: ${message}`);
-      }
+    if (opts.launchBrowser) {
+      const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
+      const defaultProfile = path.join(home, ".pi-browser-profile");
+      const wsUrl = await this.launchChrome(defaultProfile, timeoutMs);
+      await this.openWs(wsUrl, timeoutMs);
+      return;
     }
 
+    const scanned = getBrowserCandidates().map((candidate) => candidate.name).join(", ");
     throw new Error(
-      `No detected browser accepted a connection. If one of these is the browser you want, click "Allow" on its remote-debugging prompt and retry, or pass { profileDir, timeoutMs: 30000 } to wait for the click:\n${errors.join("\n")}`,
+      `No running browser with remote debugging detected. Enable it from chrome://inspect > "Discover network targets", or pass { profileDir } / { wsUrl } explicitly. Scanned: ${scanned}.`,
     );
   }
 
