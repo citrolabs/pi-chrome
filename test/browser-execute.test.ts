@@ -39,7 +39,7 @@ describe("browser_execute core", () => {
         description: "Exercise console capture",
         code: `console.log("hello", { ok: true }); console.debug("debug-line"); return { n: 1n };`,
       },
-      { sessionID: trackSession("console-session"), workspaceDir },
+      { sessionID: trackSession("console-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(result.output).toContain("hello");
@@ -57,7 +57,7 @@ describe("browser_execute core", () => {
         description: "Check workspace exists",
         code: `const fs = await import("node:fs/promises"); return (await fs.stat(${JSON.stringify(workspaceDir)})).isDirectory();`,
       },
-      { sessionID: trackSession("workspace-session"), workspaceDir },
+      { sessionID: trackSession("workspace-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(JSON.parse(result.result)).toBe(true);
@@ -72,7 +72,7 @@ describe("browser_execute core", () => {
         description: "Stream output chunks",
         code: `console.log("first"); console.warn("second"); return "ok";`,
       },
-      { sessionID: trackSession("chunk-session"), workspaceDir, onChunk: (output) => chunks.push(output) },
+      { sessionID: trackSession("chunk-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined, onChunk: (output) => chunks.push(output) },
     );
 
     expect(chunks).toEqual(["first\n", "first\nsecond\n"]);
@@ -87,7 +87,7 @@ describe("browser_execute core", () => {
         description: "Set session state",
         code: `session.__testValue = 42; return null;`,
       },
-      { sessionID, workspaceDir },
+      { sessionID, workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     const result = await executeBrowserCode(
@@ -95,7 +95,7 @@ describe("browser_execute core", () => {
         description: "Read session state",
         code: `return session.__testValue;`,
       },
-      { sessionID, workspaceDir },
+      { sessionID, workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(JSON.parse(result.result)).toBe(42);
@@ -109,7 +109,7 @@ describe("browser_execute core", () => {
         description: "Set isolated state",
         code: `session.__testValue = "left"; return null;`,
       },
-      { sessionID: trackSession("left-session"), workspaceDir },
+      { sessionID: trackSession("left-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     const result = await executeBrowserCode(
@@ -117,7 +117,7 @@ describe("browser_execute core", () => {
         description: "Read isolated state",
         code: `return session.__testValue ?? null;`,
       },
-      { sessionID: trackSession("right-session"), workspaceDir },
+      { sessionID: trackSession("right-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(JSON.parse(result.result)).toBeNull();
@@ -138,7 +138,7 @@ describe("browser_execute core", () => {
           return "done";
         `,
       },
-      { sessionID, workspaceDir },
+      { sessionID, workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(result.screenshots).toEqual([
@@ -158,7 +158,7 @@ describe("browser_execute core", () => {
           return "done";
         `,
       },
-      { sessionID: trackSession("malformed-screenshot-session"), workspaceDir },
+      { sessionID: trackSession("malformed-screenshot-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(result.screenshots).toEqual([]);
@@ -175,7 +175,7 @@ describe("browser_execute core", () => {
         description: "Dump screenshot",
         code: `for (const fn of session.callResultListeners) fn("Page.captureScreenshot", { format: "webp" }, { data: ${JSON.stringify(base64)} });`,
       },
-      { sessionID: trackSession("dump-session"), workspaceDir },
+      { sessionID: trackSession("dump-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     await flushAsyncFileWrites();
@@ -201,7 +201,7 @@ describe("browser_execute core", () => {
 
     await executeBrowserCode(
       { description: "Return successfully", code: `return "ok";` },
-      { sessionID, workspaceDir },
+      { sessionID, workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(unsub).toHaveBeenCalledOnce();
@@ -222,7 +222,7 @@ describe("browser_execute core", () => {
     });
 
     await expect(
-      executeBrowserCode({ description: "Throw failure", code: `throw new Error("boom");` }, { sessionID, workspaceDir }),
+      executeBrowserCode({ description: "Throw failure", code: `throw new Error("boom");` }, { sessionID, workspaceDir, profileDir: undefined, launchBrowser: undefined }),
     ).rejects.toThrow(/boom/);
 
     expect(unsub).toHaveBeenCalledOnce();
@@ -236,7 +236,7 @@ describe("browser_execute core", () => {
           description: "Trigger syntax error",
           code: "const x = (",
         },
-        { sessionID: trackSession("syntax-session"), workspaceDir },
+        { sessionID: trackSession("syntax-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
       ),
     ).rejects.toThrow(/syntax error in browser_execute snippet/);
   });
@@ -249,7 +249,7 @@ describe("browser_execute core", () => {
           description: "Trigger runtime error",
           code: `throw new Error("runtime-boom")`,
         },
-        { sessionID: trackSession("runtime-session"), workspaceDir },
+        { sessionID: trackSession("runtime-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
       ),
     ).rejects.toThrow(/browser_execute snippet threw: .*runtime-boom/s);
   });
@@ -263,7 +263,7 @@ describe("browser_execute core", () => {
           timeout: 10,
           code: "await new Promise((resolve) => setTimeout(resolve, 100)); return 'late';",
         },
-        { sessionID: trackSession("timeout-session"), workspaceDir },
+        { sessionID: trackSession("timeout-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
       ),
     ).rejects.toThrow(/browser_execute timed out/);
   });
@@ -283,7 +283,7 @@ describe("browser_execute core", () => {
         timeout: MAX_TIMEOUT_MS + 1,
         code: `return "ok";`,
       },
-      { sessionID: trackSession("max-timeout-session"), workspaceDir },
+      { sessionID: trackSession("max-timeout-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(observedDelay).toBe(MAX_TIMEOUT_MS);
@@ -306,9 +306,46 @@ describe("browser_execute core", () => {
         description: "Import workspace helper",
         code: `const mod = await import(${JSON.stringify(helperPath)} + "?t=" + Date.now()); return mod.answer();`,
       },
-      { sessionID: trackSession("import-session"), workspaceDir },
+      { sessionID: trackSession("import-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
     );
 
     expect(JSON.parse(result.result)).toBe(42);
+  });
+
+  it("surfaces ReferenceErrors inside unawaited promises as clean failures", async () => {
+    const workspaceDir = await tmp("pi-browser-workspace-");
+    await expect(
+      executeBrowserCode(
+        {
+          description: "Trigger unawaited promise rejection",
+          code: `
+            new Promise((resolve, reject) => {
+              const x = document;
+            });
+            return "done";
+          `,
+        },
+        { sessionID: trackSession("unawaited-rejection-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
+      ),
+    ).rejects.toThrow(/browser_execute snippet threw: .*document is not defined/);
+  });
+
+  it("surfaces ReferenceErrors inside setTimeout as clean failures", async () => {
+    const workspaceDir = await tmp("pi-browser-workspace-");
+    await expect(
+      executeBrowserCode(
+        {
+          description: "Trigger asynchronous timeout error",
+          code: `
+            setTimeout(() => {
+              const x = MutationObserver;
+            }, 0);
+            await new Promise((resolve) => setTimeout(resolve, 10));
+            return "done";
+          `,
+        },
+        { sessionID: trackSession("async-timeout-error-session"), workspaceDir, profileDir: undefined, launchBrowser: undefined },
+      ),
+    ).rejects.toThrow(/browser_execute snippet threw: .*MutationObserver is not defined/);
   });
 });

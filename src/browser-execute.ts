@@ -153,11 +153,13 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
   try {
     const timeoutMs = Math.min(args.timeout ?? DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS);
     const ran = await Promise.race([wrapped(session, snippetConsole, dynamicImport), timeoutSignal(timeoutMs)]);
+    await new Promise((resolve) => setImmediate(resolve));
     if (snippetError) {
       throw snippetError;
     }
     return { output, result: serialize(ran), screenshots };
   } catch (error) {
+    await new Promise((resolve) => setImmediate(resolve));
     const finalError = snippetError ?? error;
     throw new Error(`browser_execute snippet threw: ${finalError instanceof Error ? finalError.stack ?? finalError.message : String(finalError)}`);
   } finally {
