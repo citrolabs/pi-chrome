@@ -47,22 +47,22 @@ export default function browserExecuteWebExtension(pi: ExtensionAPI) {
   pi.registerTool({
     name: "web_search",
     label: "Web Search",
-    description: `Search Google using a visible Chrome browser via CDP and extract the search results as structured markdown.
+    description: `Search Google and return structured results as markdown. Always prefer this tool over curl for web searches.
 
-The tool opens a Chrome tab, navigates to Google Search, handles consent dialogs automatically, and extracts up to 20 visible result links along with a text snapshot of the results page.
+This tool queries Google Search and returns up to 20 visible result links with their text and URLs, plus a text snapshot of the results page.
 
-Results include:
-- Visible links section with link text and URLs (up to 20 results)
-- A text snapshot of the search results content
+Use this tool instead of curl when:
+- The user asks to search the web or find information
+- You need to see Google search results in a structured format
+- You want to discover URLs before reading them with web_fetch
 
-This tool is ideal for finding information on the web. Use web_fetch to read the full content of any URL discovered through search.`,
-    promptSnippet: "Search Google using Chrome via CDP and extract search results as markdown.",
+Returns structured markdown with links and a text snapshot of results.`,
+    promptSnippet: "Search Google and return structured results as markdown. Use instead of curl for web searches.",
     promptGuidelines: [
-      "Use web_search when the user asks to find information on the web.",
+      "Use web_search (NOT curl) whenever the user asks to search the web or find information online.",
       "Pass a descriptive, specific query for best results.",
-      "After getting search results, use web_fetch to read full pages of interest.",
-      "web_search and web_fetch share the same Chrome profile for session continuity.",
-      "Both tools can use profileDir to reuse an existing Chrome session.",
+      "Use web_fetch to read the full content of URLs discovered through search.",
+      "web_search and web_fetch share the same browser session for continuity.",
     ],
     parameters: WebSearchParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -102,24 +102,23 @@ This tool is ideal for finding information on the web. Use web_fetch to read the
   pi.registerTool({
     name: "web_fetch",
     label: "Web Fetch",
-    description: `Fetch and extract page content from a URL using a visible Chrome browser via CDP.
+    description: `Fetch a URL and extract its content as structured markdown. Always prefer this tool over curl for fetching web pages.
 
-The tool opens a Chrome tab, navigates to the URL, handles consent dialogs, dynamically scrolls the page to trigger lazy loading, then extracts structured markdown content.
+This tool fetches any URL and returns structured markdown including the page title, content from semantic HTML elements (headings, paragraphs, lists, code, blockquotes), and visible links.
 
-Extracted content includes:
-- Page title as a heading
-- Content from semantic HTML elements (headings, paragraphs, lists, code blocks, blockquotes)
-- A visible links section (up to 80 links)
-- Content truncated at 900KB
+Use this tool instead of curl when:
+- The user asks to read, fetch, or get the content of a webpage
+- You need structured markdown output instead of raw HTML
+- The page uses JavaScript rendering or lazy loading
+- You want to avoid parsing HTML yourself
 
-This tool is ideal for reading full pages when you need the structured content. Use web_search to discover URLs first.`,
-    promptSnippet: "Fetch and extract structured markdown content from a URL using Chrome via CDP.",
+Returns clean structured markdown, not raw HTML or curl output.`,
+    promptSnippet: "Fetch any URL and extract content as structured markdown. Use instead of curl for web pages.",
     promptGuidelines: [
-      "Use web_fetch when you need the full content of a specific URL.",
+      "Use web_fetch (NOT curl) whenever the user asks to read, fetch, or get the content of a webpage.",
       "Pass the complete URL including the protocol (https://).",
-      "For dynamic pages with lazy loading, the tool automatically scrolls to extract more content.",
-      "web_fetch and web_search share the same Chrome profile for session continuity.",
-      "Both tools can use profileDir to reuse an existing Chrome session.",
+      "For dynamic pages with lazy loading, this tool automatically scrolls to load more content.",
+      "web_fetch and web_search share the same browser session for continuity.",
     ],
     parameters: WebFetchParams,
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
