@@ -131,7 +131,7 @@ describe("web_fetch Pi extension adapter", () => {
 
     expect(webFetch.name).toBe("web_fetch");
     expect(webFetch.label).toBe("Web Fetch");
-    expect(webFetch.promptSnippet).toContain("Chrome");
+    expect(webFetch.promptSnippet).toContain("curl");
     expect(webFetch.promptGuidelines?.some((line) => line.includes("web_search"))).toBe(true);
   });
 
