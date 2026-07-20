@@ -250,10 +250,10 @@ async function openTab(
   session: Session,
   url: string,
 ): Promise<string> {
-  // Create a new target (tab) in the background
+  // Create a new visible target (tab) so user can see what's happening
   const result = (await session.domains.Target.createTarget({
     url,
-    background: true,
+    background: false,
     newWindow: false,
   })) as { targetId: string };
   return result.targetId;
