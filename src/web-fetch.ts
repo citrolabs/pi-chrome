@@ -376,9 +376,8 @@ async function ensureConnected(session: Session): Promise<void> {
       // Browser may have died; fall through
     }
   }
-  // Session is not connected or browser is dead; connect will handle it
-  // (user should have called session.connect() with profileDir)
-  throw new Error("Browser is not connected. Call session.connect({ profileDir }) first.");
+  // Session is not connected; try to connect (uses detectBrowsers fallback)
+  await session.connect({ launchBrowser: false });
 }
 
 // ============================================================================
@@ -396,7 +395,7 @@ async function ensureConnected(session: Session): Promise<void> {
  */
 export async function webSearch(opts: WebSearchOptions): Promise<WebSearchResult | WebError> {
   const { query, profileDir } = opts;
-  if (!query || query.length === 0) {
+  if (!query || query.trim().length === 0) {
     return { error: true, message: "web_search requires a query parameter" };
   }
 

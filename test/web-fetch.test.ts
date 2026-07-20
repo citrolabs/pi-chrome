@@ -232,19 +232,31 @@ describe("webSearch", () => {
 	});
 
 	it("returns error from CDP when browser is unavailable", async () => {
+		// Mock Session.connect to fail immediately so we don't connect to real Chrome
+		const { Session } = await import("../src/cdp/session.js");
+		const connectSpy = vi.spyOn(Session.prototype, "connect").mockRejectedValue(new Error("CDP not available"));
+
 		const result = await webSearch({ query: "hello" });
 		expect("error" in result).toBe(true);
 		if ("error" in result) {
 			expect(result.message).toContain("failed");
 		}
+
+		connectSpy.mockRestore();
 	});
 
 	it("builds correct Google search URL with encoding", async () => {
+		// Mock Session.connect to fail immediately so we don't connect to real Chrome
+		const { Session } = await import("../src/cdp/session.js");
+		const connectSpy = vi.spyOn(Session.prototype, "connect").mockRejectedValue(new Error("CDP not available"));
+
 		const result = await webSearch({ query: "hello world & foo" });
 		expect("error" in result).toBe(true);
 		if ("error" in result) {
 			expect(result.message).toContain("web_search");
 		}
+
+		connectSpy.mockRestore();
 	});
 });
 
@@ -265,11 +277,17 @@ describe("webFetch", () => {
 	});
 
 	it("returns error from CDP when browser is unavailable", async () => {
+		// Mock Session.connect to fail immediately so we don't connect to real Chrome
+		const { Session } = await import("../src/cdp/session.js");
+		const connectSpy = vi.spyOn(Session.prototype, "connect").mockRejectedValue(new Error("CDP not available"));
+
 		const result = await webFetch({ url: "https://example.com" });
 		expect("error" in result).toBe(true);
 		if ("error" in result) {
 			expect(result.message).toContain("failed");
 		}
+
+		connectSpy.mockRestore();
 	});
 });
 
