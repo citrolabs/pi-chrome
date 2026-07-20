@@ -19,6 +19,19 @@ This is not a standalone browser testing framework and does not host a daemon. I
 
 中文文档: [README.zh-CN.md](./README.zh-CN.md)
 
+## Tools
+
+### `browser_execute`
+Run arbitrary JavaScript in a visible Chrome browser via CDP. Supports console capture, screenshot collection, and workspace imports.
+
+### `web_search`
+Search Google using a visible Chrome browser via CDP. Extracts up to 20 visible result links along with a text snapshot of the search results page as structured markdown. Handles Google consent dialogs automatically.
+
+### `web_fetch`
+Fetch and extract page content from any URL using a visible Chrome browser. Dynamically scrolls to trigger lazy loading, then extracts structured markdown from semantic HTML elements (headings, paragraphs, lists, code blocks, blockquotes). Truncates content at 900KB.
+
+All three tools share the same Chrome profile for session continuity and can use `profileDir` to reuse an existing Chrome session.
+
 ## Quick Start
 
 ### 1. Install the extension
@@ -45,7 +58,10 @@ Pi will connect to an authorized Chromium browser, drive the page, inspect the r
 
 ## What it gives Pi
 
-- `browser_execute`: Pi-callable tool name.
+- `browser_execute`: Pi-callable tool for running arbitrary JavaScript in the browser.
+- `web_search`: Pi-callable tool for Google search via a visible Chrome browser.
+- `web_fetch`: Pi-callable tool for fetching and extracting page content as structured markdown.
+- `session`: persistent CDP session; multiple calls in the same Pi session reuse browser state.
 - `session`: persistent CDP session; multiple calls in the same Pi session reuse browser state.
 - `console`: captures `log`, `error`, `warn`, `info`, and `debug` output and streams it back in the tool result.
 - Screenshot collection: successful `Page.captureScreenshot` calls are automatically converted into Pi image content.
@@ -125,7 +141,7 @@ npm run typecheck
 npm test
 ```
 
-Current tests cover session reuse/isolation, workspace imports, console streaming, timeout handling, screenshot collection, CDP target filtering, active `sessionId` routing, and Pi image content conversion.
+Current tests cover session reuse/isolation, workspace imports, console streaming, timeout handling, screenshot collection, CDP target filtering, active `sessionId` routing, Pi image content conversion, web search and fetch logic, Google consent handling, dynamic scrolling, and Pi extension adapter integration.
 
 ## Acknowledgements
 

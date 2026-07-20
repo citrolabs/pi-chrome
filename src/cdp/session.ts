@@ -41,7 +41,7 @@ export class Session implements Transport {
   private nextId = 1;
   private pending = new Map<number, Pending>();
   private activeSessionId: string | undefined;
-  private chromeProcess?: import("node:child_process").ChildProcess;
+  private chromeProcess: import("node:child_process").ChildProcess | undefined;
   private eventListeners: Array<(method: string, params: unknown, sessionId?: string) => void> = [];
   private callResultListeners: Array<(method: string, params: unknown, result: unknown) => void> = [];
 
