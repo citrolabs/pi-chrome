@@ -295,10 +295,12 @@ export interface RunPageOptions {
   url: string;
   extractJs: string;
   scrollDynamic?: boolean;
+  /** Milliseconds to leave the tab visible after extraction (default: 15000). */
+  keepTabVisibleMs?: number;
 }
 
 export async function runPage(opts: RunPageOptions): Promise<string> {
-  const { session, url, extractJs, scrollDynamic = true } = opts;
+  const { session, url, extractJs, scrollDynamic = true, keepTabVisibleMs = 15000 } = opts;
 
   // Open a new tab for this operation
   const targetId = await openTab(session, "about:blank");
@@ -347,6 +349,9 @@ export async function runPage(opts: RunPageOptions): Promise<string> {
     }
     return content;
   } finally {
+    // Leave tab visible for configured duration so user can see what happened
+    await new Promise((r) => setTimeout(r, keepTabVisibleMs));
+
     // Close the tab
     session.setActiveSession(undefined);
     try {

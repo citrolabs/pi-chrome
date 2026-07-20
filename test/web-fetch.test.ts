@@ -144,6 +144,7 @@ describe("runPage", () => {
 			url: "https://example.com",
 			extractJs: mockExtractJs,
 			scrollDynamic: false,
+			keepTabVisibleMs: 0,
 		});
 
 		expect(result).toBe("Hello world");
@@ -163,6 +164,7 @@ describe("runPage", () => {
 				url: "https://example.com",
 				extractJs: "null-extract",
 				scrollDynamic: false,
+				keepTabVisibleMs: 0,
 			}),
 		).rejects.toThrow("Page extraction returned null");
 	});
@@ -178,6 +180,7 @@ describe("runPage", () => {
 				url: "https://example.com",
 				extractJs: "boom-extract",
 				scrollDynamic: false,
+				keepTabVisibleMs: 0,
 			}),
 		).rejects.toThrow("JavaScript evaluation failed");
 	});
@@ -203,6 +206,7 @@ describe("runPage", () => {
 			url: "https://www.google.com/search?q=test",
 			extractJs: mockExtractJs,
 			scrollDynamic: false,
+			keepTabVisibleMs: 0,
 		});
 
 		expect(session._mockCalls.some((c) =>
