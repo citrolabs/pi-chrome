@@ -3,6 +3,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { executeBrowserCode, type BrowserExecuteParameters } from "../src/browser-execute.js";
 
+console.error("[DEBUG] browser-execute.ts: Extension loading...");
+
 const MAX_METADATA_LENGTH = 30_000;
 
 const BrowserExecuteParams = Type.Object({

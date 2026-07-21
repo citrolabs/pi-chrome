@@ -20,8 +20,8 @@
   ],
   "pi": {
     "extensions": [
-      "./extensions/browser-execute",
-      "./extensions/browser-execute-web"
+      "./extensions/browser-execute.ts",
+      "./extensions/browser-execute-web.ts"
     ],
     "image": "https://raw.githubusercontent.com/citrolabs/pi-browser-cdp-extension/main/logo.png"
   },

@@ -4,6 +4,14 @@ import { Type } from "typebox";
 import { executeBrowserCode, type BrowserExecuteParameters } from "../src/browser-execute.js";
 import { webSearch, webFetch, type WebSearchOptions, type WebFetchOptions } from "../src/web-fetch.js";
 
+// Write to file to debug extension loading
+import { writeFileSync } from "node:fs";
+try {
+    writeFileSync("/tmp/pi-ext-debug.log", "[DEBUG] browser-execute-web.ts: Extension loading...\n", { flag: "a" });
+} catch (e) {
+    console.error("Failed to write debug log:", e);
+}
+
 // ============================================================================
 // Web Search Tool
 // ============================================================================
@@ -43,6 +51,8 @@ function workspaceDirOf(cwd: string): string {
 }
 
 export default function browserExecuteWebExtension(pi: ExtensionAPI) {
+  writeFileSync("/tmp/pi-ext-debug.log", "[DEBUG] browser-execute-web.ts: Extension factory called\n", { flag: "a" });
+  
   // --- web_search tool ---
   pi.registerTool({
     name: "web_search",
