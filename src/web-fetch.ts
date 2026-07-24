@@ -15,16 +15,20 @@ import { Session } from "./cdp/session.js";
 // Types
 // ============================================================================
 
+export type ProgressCallback = (status: string) => void;
+
 export type WebSearchOptions = {
   query: string;
   profileDir?: string | undefined;
   timeoutMs?: number;
+  onProgress?: ProgressCallback;
 };
 
 export type WebFetchOptions = {
   url: string;
   profileDir?: string | undefined;
   timeoutMs?: number;
+  onProgress?: ProgressCallback;
 };
 
 export type WebSearchResult = {
@@ -297,10 +301,12 @@ export interface RunPageOptions {
   scrollDynamic?: boolean;
   /** Milliseconds to leave the tab visible after extraction (default: 15000). */
   keepTabVisibleMs?: number;
+  /** Optional progress callback for UI feedback. */
+  onProgress?: ProgressCallback;
 }
 
 export async function runPage(opts: RunPageOptions): Promise<string> {
-  const { session, url, extractJs, scrollDynamic = true, keepTabVisibleMs = 15000 } = opts;
+  const { session, url, extractJs, scrollDynamic = true, keepTabVisibleMs = 15000, onProgress } = opts;
 
   // Open a new tab for this operation
   const targetId = await openTab(session, "about:blank");
@@ -314,6 +320,7 @@ export async function runPage(opts: RunPageOptions): Promise<string> {
     await session.domains.Runtime.enable();
 
     // Navigate to the target URL
+    onProgress?.(`Navigating to ${url}`);
     await session.domains.Page.navigate({ url });
     await waitForNavigated(session);
 
@@ -343,6 +350,7 @@ export async function runPage(opts: RunPageOptions): Promise<string> {
     }
 
     // Extract content using the provided JS
+    onProgress?.(`Extracting content`);
     const content = await evaluate(session, extractJs);
     if (content === null) {
       throw new Error("Page extraction returned null");
@@ -394,10 +402,12 @@ async function ensureConnected(session: Session): Promise<void> {
  * Handles Google consent dialogs automatically.
  */
 export async function webSearch(opts: WebSearchOptions): Promise<WebSearchResult | WebError> {
-  const { query, profileDir } = opts;
+  const { query, profileDir, onProgress } = opts;
   if (!query || query.trim().length === 0) {
     return { error: true, message: "web_search requires a query parameter" };
   }
+
+  onProgress?.(`Searching: ${query}`);
 
   // Build the Google search URL
   const encoded = encodeURIComponent(query);
@@ -406,6 +416,7 @@ export async function webSearch(opts: WebSearchOptions): Promise<WebSearchResult
   try {
     const sessionObj = new Session();
     if (profileDir) {
+      onProgress?.(`Connecting to Chrome`);
       await sessionObj.connect({ profileDir, launchBrowser: true });
     } else {
       await ensureConnected(sessionObj);
@@ -416,6 +427,7 @@ export async function webSearch(opts: WebSearchOptions): Promise<WebSearchResult
       url: searchUrl,
       extractJs: GOOGLE_SEARCH_EXTRACT_JS,
       scrollDynamic: false,
+      ...(onProgress && { onProgress }),
     });
 
     // Count links
@@ -448,14 +460,17 @@ export async function webSearch(opts: WebSearchOptions): Promise<WebSearchResult
  * Dynamically scrolls the page to trigger lazy loading before extraction.
  */
 export async function webFetch(opts: WebFetchOptions): Promise<WebFetchResult | WebError> {
-  const { url, profileDir } = opts;
+  const { url, profileDir, onProgress } = opts;
   if (!url || url.length === 0) {
     return { error: true, message: "web_fetch requires a url parameter" };
   }
 
+  onProgress?.(`Fetching: ${url}`);
+
   try {
     const sessionObj = new Session();
     if (profileDir) {
+      onProgress?.(`Connecting to Chrome`);
       await sessionObj.connect({ profileDir, launchBrowser: true });
     } else {
       await ensureConnected(sessionObj);
@@ -466,6 +481,7 @@ export async function webFetch(opts: WebFetchOptions): Promise<WebFetchResult | 
       url,
       extractJs: PAGE_EXTRACT_JS,
       scrollDynamic: true,
+      ...(onProgress && { onProgress }),
     });
 
     // Extract metadata

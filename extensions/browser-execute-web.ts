@@ -79,6 +79,12 @@ Returns structured markdown with links and a text snapshot of results.`,
       const options: WebSearchOptions = {
         query: params.query,
         profileDir: params.profileDir,
+        onProgress: (status) => {
+          _onUpdate?.({
+            content: [{ type: "text" as const, text: status }],
+            details: { status },
+          });
+        },
       };
 
       const result = await webSearch(options);
@@ -135,6 +141,12 @@ Returns clean structured markdown, not raw HTML or curl output.`,
       const options: WebFetchOptions = {
         url: params.url,
         profileDir: params.profileDir,
+        onProgress: (status) => {
+          _onUpdate?.({
+            content: [{ type: "text" as const, text: status }],
+            details: { status },
+          });
+        },
       };
 
       const result = await webFetch(options);
