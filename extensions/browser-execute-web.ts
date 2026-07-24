@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { Component } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { executeBrowserCode, type BrowserExecuteParameters } from "../src/browser-execute.js";
 import { webSearch, webFetch, type WebSearchOptions, type WebFetchOptions } from "../src/web-fetch.js";
@@ -75,6 +76,14 @@ Returns structured markdown with links and a text snapshot of results.`,
       "web_search and web_fetch share the same browser session for continuity.",
     ],
     parameters: WebSearchParams,
+    renderCall: (args: { query: string }, ..._rest: any[]) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Text } = require("@earendil-works/pi-tui");
+      const text = new Text(0, 0);
+      const q = args.query?.trim() || "...";
+      text.setText(`Web search: ${q}`);
+      return text;
+    },
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const options: WebSearchOptions = {
         query: params.query,
@@ -137,6 +146,14 @@ Returns clean structured markdown, not raw HTML or curl output.`,
       "web_fetch and web_search share the same browser session for continuity.",
     ],
     parameters: WebFetchParams,
+    renderCall: (args: { url: string }, ..._rest: any[]) => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Text } = require("@earendil-works/pi-tui");
+      const text = new Text(0, 0);
+      const u = args.url?.trim() || "...";
+      text.setText(`Web fetch: ${u}`);
+      return text;
+    },
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       const options: WebFetchOptions = {
         url: params.url,
