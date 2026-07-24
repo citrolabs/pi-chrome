@@ -355,19 +355,38 @@ export async function runPage(opts: RunPageOptions): Promise<string> {
     if (content === null) {
       throw new Error("Page extraction returned null");
     }
-    return content;
-  } finally {
-    // Leave tab visible for configured duration so user can see what happened
-    await new Promise((r) => setTimeout(r, keepTabVisibleMs));
 
-    // Close the tab
+    // Fire-and-forget: close the tab in the background after the visibility delay.
+    // This lets the tool return immediately so the agent can continue working.
+    // The tab stays visible for the full duration so the user can see what happened.
+    scheduleTabClose(session, targetId, keepTabVisibleMs);
+
+    return content;
+  } catch (error) {
+    // If extraction failed, close the tab immediately
     session.setActiveSession(undefined);
     try {
       await session.domains.Target.closeTarget({ targetId });
     } catch {
       // Ignore close errors
     }
+    throw error;
   }
+}
+
+/**
+ * Close a Chrome tab after a delay without blocking the caller.
+ * The tab stays visible for the full duration; the caller returns immediately.
+ */
+function scheduleTabClose(session: Session, targetId: string, delayMs: number): void {
+  setTimeout(async () => {
+    session.setActiveSession(undefined);
+    try {
+      await session.domains.Target.closeTarget({ targetId });
+    } catch {
+      // Tab may have already been closed; ignore
+    }
+  }, delayMs);
 }
 
 // ============================================================================
