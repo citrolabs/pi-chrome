@@ -14,6 +14,8 @@ export type BrowserExecuteParameters = {
 export type ExecuteContext = {
   sessionID: string;
   workspaceDir: string;
+  profileDir: string | undefined;
+  launchBrowser: boolean | undefined;
   onChunk?: (output: string) => void;
 };
 
@@ -39,6 +41,44 @@ const SCREENSHOT_FORMAT_TO_EXT: Record<string, string> = {
   jpeg: "jpg",
   webp: "webp",
 };
+
+// Concurrency-safe global process error interceptor state
+const activeCatchers = new Set<(error: unknown) => void>();
+let backupUncaught: any[] = [];
+let backupUnhandled: any[] = [];
+let isListening = false;
+
+const globalErrorHandler = (error: unknown) => {
+  for (const catcher of activeCatchers) {
+    try {
+      catcher(error);
+    } catch {
+      // Prevent catcher failures from breaking other catchers
+    }
+  }
+};
+
+function startGlobalListening() {
+  if (isListening) return;
+  isListening = true;
+  backupUncaught = process.listeners("uncaughtException");
+  backupUnhandled = process.listeners("unhandledRejection");
+  process.removeAllListeners("uncaughtException");
+  process.removeAllListeners("unhandledRejection");
+  process.on("uncaughtException", globalErrorHandler);
+  process.on("unhandledRejection", globalErrorHandler);
+}
+
+function stopGlobalListening() {
+  if (!isListening || activeCatchers.size > 0) return;
+  isListening = false;
+  process.off("uncaughtException", globalErrorHandler);
+  process.off("unhandledRejection", globalErrorHandler);
+  for (const l of backupUncaught) process.on("uncaughtException", l);
+  for (const l of backupUnhandled) process.on("unhandledRejection", l);
+  backupUncaught = [];
+  backupUnhandled = [];
+}
 
 const AsyncFunction = (async () => {}).constructor as new (...args: string[]) => (...injected: unknown[]) => Promise<unknown>;
 const dynamicImport = (specifier: string) => import(specifier);
@@ -78,6 +118,15 @@ function timeoutSignal(ms: number): Promise<never> {
 export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: ExecuteContext): Promise<ExecuteResult> {
   const session = SessionStore.get(ctx.sessionID);
   await mkdir(ctx.workspaceDir, { recursive: true });
+
+  // Auto-connect if profileDir is provided
+  if (ctx.profileDir && !session.isConnected()) {
+    await session.connect({
+      profileDir: ctx.profileDir,
+      launchBrowser: ctx.launchBrowser ?? true,
+      timeoutMs: args.timeout ?? DEFAULT_TIMEOUT_MS,
+    });
+  }
 
   let wrapped: (...injected: unknown[]) => Promise<unknown>;
   try {
@@ -126,13 +175,29 @@ export async function executeBrowserCode(args: BrowserExecuteParameters, ctx: Ex
     }
   });
 
+  let snippetError: Error | null = null;
+  const localCatcher = (error: unknown) => {
+    snippetError = error instanceof Error ? error : new Error(String(error));
+  };
+
+  activeCatchers.add(localCatcher);
+  startGlobalListening();
+
   try {
     const timeoutMs = Math.min(args.timeout ?? DEFAULT_TIMEOUT_MS, MAX_TIMEOUT_MS);
     const ran = await Promise.race([wrapped(session, snippetConsole, dynamicImport), timeoutSignal(timeoutMs)]);
+    await new Promise((resolve) => setImmediate(resolve));
+    if (snippetError) {
+      throw snippetError;
+    }
     return { output, result: serialize(ran), screenshots };
   } catch (error) {
-    throw new Error(`browser_execute snippet threw: ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
+    await new Promise((resolve) => setImmediate(resolve));
+    const finalError = snippetError ?? error;
+    throw new Error(`browser_execute snippet threw: ${finalError instanceof Error ? finalError.message : String(finalError)}`);
   } finally {
+    activeCatchers.delete(localCatcher);
+    stopGlobalListening();
     unsubscribe();
   }
 }

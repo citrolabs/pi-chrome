@@ -43,9 +43,24 @@ pi install .
 
 Pi 会连接已授权的 Chromium 浏览器，打开页面、读取结果，并把截图附在回复里。
 
+## 工具
+
+### `browser_execute`
+通过 CDP 在可见的 Chrome 浏览器中执行任意 JavaScript。支持 console 捕获、截图收集和 workspace 导入。
+
+### `web_search`
+通过可见的 Chrome 浏览器搜索 Google。提取最多 20 条可见结果链接及搜索结果页面的文本摘要，以结构化 markdown 返回。自动处理 Google 同意弹窗。
+
+### `web_fetch`
+通过可见的 Chrome 浏览器抓取任意 URL 的页面内容。自动滚动触发懒加载，然后从语义化 HTML 元素（标题、段落、列表、代码块、引用块）中提取结构化 markdown。900KB 截断。
+
+三个工具共享同一个 Chrome 配置用于 session 连续性，都可以使用 `profileDir` 复用已有的 Chrome session。
+
 ## 给 Pi 提供什么
 
 - `browser_execute`：Pi 可调用的工具名。
+- `web_search`：通过可见 Chrome 浏览器搜索 Google 的工具。
+- `web_fetch`：抓取页面内容并提取结构化 markdown 的工具。
 - `session`：持久 CDP Session，同一个 Pi session 内多次调用会复用状态。
 - `console`：捕获 `log/error/warn/info/debug`，作为工具输出流式返回。
 - 截图收集：成功的 `Page.captureScreenshot` 会自动转成 Pi image content。
@@ -103,7 +118,7 @@ npm run typecheck
 npm test
 ```
 
-当前测试覆盖包括：session 复用/隔离、workspace import、console streaming、timeout、screenshot 收集、CDP target 过滤、active sessionId 路由、Pi image content 转换。
+当前测试覆盖包括：session 复用/隔离、workspace import、console streaming、timeout、screenshot 收集、CDP target 过滤、active sessionId 路由、Pi image content 转换、web search 和 fetch 逻辑、Google 同意弹窗处理、动态滚动、Pi extension adapter 集成。
 
 ## 致谢
 

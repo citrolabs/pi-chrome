@@ -1,8 +1,13 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { detectBrowsers, listPageTargets, resolveWsUrl, Session } from "../src/cdp/session.js";
+
+// Mock child_process for ESM compatibility
+vi.mock("node:child_process", () => ({
+  spawn: vi.fn(),
+}));
 
 const tempDirs: string[] = [];
 
@@ -98,5 +103,63 @@ describe("CDP session helpers", () => {
     session.close();
     await expect(pagePromise).rejects.toThrow(/CDP socket closed/);
     await expect(browserPromise).rejects.toThrow(/CDP socket closed/);
+  });
+
+  it("connect auto-launches Chrome when launchBrowser is true and profileDir is empty", async () => {
+    const profileDir = await tmp("pi-browser-launch-");
+    const session = new Session();
+
+    // Mock spawn to simulate Chrome starting and writing the port file
+    const { spawn } = await import("node:child_process");
+    const mockChild: any = {
+      on: vi.fn(),
+      stdout: { on: vi.fn() },
+      stderr: { on: vi.fn() },
+    };
+    vi.mocked(spawn).mockReturnValue(mockChild);
+
+    // Mock WebSocket connection so it doesn't try to open a real WS connection
+    const openWsSpy = vi.spyOn(session as any, "openWs").mockResolvedValue(undefined);
+
+    // Simulate Chrome writing the file after a short delay
+    setTimeout(async () => {
+      await writeFile(path.join(profileDir, "DevToolsActivePort"), "9222\n/devtools/browser/abc\n", "utf8");
+    }, 50);
+
+    await session.connect({
+      profileDir,
+      launchBrowser: true,
+      timeoutMs: 1000,
+    });
+
+    expect(spawn).toHaveBeenCalled();
+    expect(openWsSpy).toHaveBeenCalledWith("ws://127.0.0.1:9222/devtools/browser/abc", 1000);
+
+    vi.mocked(spawn).mockReset();
+    openWsSpy.mockRestore();
+  });
+
+  it("connect reuses existing Chrome instance if profileDir has active port", async () => {
+    const profileDir = await tmp("pi-browser-reuse-");
+    const session = new Session();
+
+    const { spawn } = await import("node:child_process");
+    const openWsSpy = vi.spyOn(session as any, "openWs").mockResolvedValue(undefined);
+
+    // Write DevToolsActivePort beforehand to simulate a running browser
+    await writeFile(path.join(profileDir, "DevToolsActivePort"), "9225\n/devtools/browser/xyz\n", "utf8");
+
+    await session.connect({
+      profileDir,
+      launchBrowser: true,
+      timeoutMs: 1000,
+    });
+
+    // It should connect directly without calling spawn
+    expect(spawn).not.toHaveBeenCalled();
+    expect(openWsSpy).toHaveBeenCalledWith("ws://127.0.0.1:9225/devtools/browser/xyz", 1000);
+
+    vi.mocked(spawn).mockReset();
+    openWsSpy.mockRestore();
   });
 });

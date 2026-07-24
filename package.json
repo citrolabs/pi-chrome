@@ -20,7 +20,8 @@
   ],
   "pi": {
     "extensions": [
-      "./extensions"
+      "./extensions/browser-execute.ts",
+      "./extensions/browser-execute-web.ts"
     ],
     "image": "https://raw.githubusercontent.com/citrolabs/pi-browser-cdp-extension/main/logo.png"
   },
@@ -35,8 +36,9 @@
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
     "@types/node": "^24.3.0",
-    "typescript": "^5.7.3",
+    "tsx": "^4.22.4",
     "typebox": "^1.1.24",
+    "typescript": "^5.7.3",
     "vitest": "^3.2.4"
   },
   "engines": {

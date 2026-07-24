@@ -3,6 +3,8 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import { executeBrowserCode, type BrowserExecuteParameters } from "../src/browser-execute.js";
 
+console.error("[DEBUG] browser-execute.ts: Extension loading...");
+
 const MAX_METADATA_LENGTH = 30_000;
 
 const BrowserExecuteParams = Type.Object({
@@ -14,6 +16,16 @@ const BrowserExecuteParams = Type.Object({
     description:
       "Clear, concise description of what this snippet does in 3-7 words. Examples: Connect to local Chrome; Scrape product titles; Screenshot homepage.",
   }),
+  profileDir: Type.Optional(
+    Type.String({
+      description: "Chrome user-data directory. If provided, connects to (or launches) Chrome with --user-data-dir=profileDir. E.g. /home/user/.ds4/browser",
+    }),
+  ),
+  launchBrowser: Type.Optional(
+    Type.Boolean({
+      description: "When true and no browser is detected at profileDir, launch Chrome automatically. Default true when profileDir is provided.",
+    }),
+  ),
   timeout: Type.Optional(
     Type.Number({
       description: "Optional timeout in milliseconds. Default 60000; maximum 600000. CPU-bound snippets without await yield points may overrun.",
@@ -39,7 +51,7 @@ export default function browserExecuteExtension(pi: ExtensionAPI) {
     label: "Browser Execute",
     description: `Execute JavaScript against a Chromium browser through the Chrome DevTools Protocol (CDP).
 
-The snippet receives a persistent CDP session as \`session\` and a captured \`console\`. Connect once with \`await session.connect()\`, \`await session.connect({ wsUrl })\`, or \`await session.connect({ profileDir })\`, then attach a page target with \`await session.use(targetId)\`. The session persists across later browser_execute calls in the same Pi process/session key. Every successful \`Page.captureScreenshot\` call is returned as an image part. Reusable scripts belong in \`.pi/browser-execute-workspace\` and can be loaded with \`await import(absPath + "?t=" + Date.now())\`.
+The snippet receives a persistent CDP session as \`session\` and a captured \`console\`. Connect once with \`await session.connect()\`, \`await session.connect({ wsUrl })\`, \`await session.connect({ profileDir })\`, or \`await session.connect({ profileDir, launchBrowser: true })\` to auto-launch Chrome. Then attach a page target with \`await session.use(targetId)\`. The session persists across later browser_execute calls in the same Pi process/session key. Every successful \`Page.captureScreenshot\` call is returned as an image part. Reusable scripts belong in \`.pi/browser-execute-workspace\` and can be loaded with \`await import(absPath + "?t=" + Date.now())\`.
 
 Security: CDP controls the connected browser. Only use this tool against browsers/endpoints the user authorized.`,
     promptSnippet: "Execute JavaScript snippets against a real Chromium browser via CDP.",
@@ -48,50 +60,67 @@ Security: CDP controls the connected browser. Only use this tool against browser
       "Before using browser_execute for page operations, connect with session.connect(), choose a page target from Target.getTargets, and call session.use(targetId).",
       "browser_execute snippets have session and console in scope; write reusable helper modules under .pi/browser-execute-workspace and import them with await import(...).",
       "browser_execute automatically returns Page.captureScreenshot results as image parts; do not manually decode screenshots unless processing bytes is required.",
+      "To launch Chrome with a specific profile directory, pass { profileDir: '/path', launchBrowser: true } to session.connect().",
     ],
     parameters: BrowserExecuteParams,
     async execute(_toolCallId, params, _signal, onUpdate, ctx) {
       const sessionID = sessionIDOf(ctx as { sessionId?: string; sessionID?: string; cwd: string });
       const workspaceDir = workspaceDirOf(ctx.cwd);
 
-      const result = await executeBrowserCode(params as BrowserExecuteParameters, {
-        sessionID,
-        workspaceDir,
-        onChunk: (output) => {
-          onUpdate?.({
-            content: [{ type: "text", text: preview(output) }],
-            details: { output: preview(output) },
-          });
-        },
-      });
-
-      const text = [
-        result.output.trimEnd(),
-        result.result === "null" ? "" : `=> ${result.result}`,
-        result.screenshots.length > 0
-          ? `(${result.screenshots.length} screenshot${result.screenshots.length === 1 ? "" : "s"} attached)`
-          : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-
-      return {
-        content: [
-          { type: "text" as const, text: text || "browser_execute completed" },
-          ...result.screenshots.map((screenshot) => ({
-            type: "image" as const,
-            mimeType: screenshot.mime,
-            data: screenshot.base64,
-          })),
-        ],
-        details: {
-          description: params.description,
-          result: result.result,
-          output: preview(result.output),
-          screenshotCount: result.screenshots.length,
+      try {
+        const result = await executeBrowserCode(params as BrowserExecuteParameters, {
+          sessionID,
           workspaceDir,
-        },
-      };
+          profileDir: params.profileDir,
+          launchBrowser: params.launchBrowser ?? undefined,
+          onChunk: (output: string) => {
+            onUpdate?.({
+              content: [{ type: "text", text: preview(output) }],
+              details: { output: preview(output) },
+            });
+          },
+        } as any);
+
+        const text = [
+          result.output.trimEnd(),
+          result.result === "null" ? "" : `=> ${result.result}`,
+          result.screenshots.length > 0
+            ? `(${result.screenshots.length} screenshot${result.screenshots.length === 1 ? "" : "s"} attached)`
+            : "",
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+
+        return {
+          content: [
+            { type: "text" as const, text: text || "browser_execute completed" },
+            ...result.screenshots.map((screenshot) => ({
+              type: "image" as const,
+              mimeType: screenshot.mime,
+              data: screenshot.base64,
+            })),
+          ],
+          details: {
+            description: params.description,
+            result: result.result,
+            output: preview(result.output),
+            screenshotCount: result.screenshots.length,
+            workspaceDir,
+          },
+        };
+      } catch (error) {
+        const errMessage = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            { type: "text" as const, text: `Error: browser_execute failed:\n${errMessage}` },
+          ],
+          details: {
+            description: params.description,
+            error: errMessage,
+            workspaceDir,
+          },
+        };
+      }
     },
   });
 }
