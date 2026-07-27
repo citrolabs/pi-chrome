@@ -6,11 +6,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/citrolabs/pi-chrome.git"
+    "url": "git+https://github.com/citrolabs/pi-chrome-use.git"
   },
-  "homepage": "https://github.com/citrolabs/pi-chrome#readme",
+  "homepage": "https://github.com/citrolabs/pi-chrome-use#readme",
   "bugs": {
-    "url": "https://github.com/citrolabs/pi-chrome/issues"
+    "url": "https://github.com/citrolabs/pi-chrome-use/issues"
   },
   "keywords": [
     "pi-package",
@@ -22,7 +22,7 @@
     "extensions": [
       "./extensions"
     ],
-    "image": "https://raw.githubusercontent.com/citrolabs/pi-chrome/main/logo.png"
+    "image": "https://raw.githubusercontent.com/citrolabs/pi-chrome-use/main/logo.png"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

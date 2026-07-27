@@ -7,7 +7,7 @@
     <a href="./package.json"><img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D20.6.0-339933.svg"></a>
     <a href="#validation"><img alt="CI" src="https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg"></a>
     <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-    <a href="https://github.com/citrolabs/pi-chrome"><img alt="GitHub stars" src="https://img.shields.io/github/stars/citrolabs/pi-chrome.svg?style=social"></a>
+    <a href="https://github.com/citrolabs/pi-chrome-use"><img alt="GitHub stars" src="https://img.shields.io/github/stars/citrolabs/pi-chrome-use.svg?style=social"></a>
   </p>
 </div>
 
@@ -28,7 +28,7 @@ pi install npm:pi-chrome-use
 From GitHub:
 
 ```bash
-pi install git:github.com/citrolabs/pi-chrome
+pi install git:github.com/citrolabs/pi-chrome-use
 ```
 
 For local development:
@@ -119,4 +119,4 @@ The shape of this project was inspired by the following work:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=citrolabs/pi-chrome&type=Date)](https://star-history.com/#citrolabs/pi-chrome&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=citrolabs/pi-chrome-use&type=Date)](https://star-history.com/#citrolabs/pi-chrome-use&Date)
