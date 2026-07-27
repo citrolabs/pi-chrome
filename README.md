@@ -1,13 +1,13 @@
 <div align="center">
-  <h1>pi-browser-cdp-extension</h1>
+  <h1>pi-chrome</h1>
   <p>A real-browser CDP execution extension for Pi agents.</p>
   <p>
-    <a href="https://www.npmjs.com/package/pi-browser-cdp-extension"><img alt="npm version" src="https://img.shields.io/npm/v/pi-browser-cdp-extension.svg"></a>
+    <a href="https://www.npmjs.com/package/pi-chrome"><img alt="npm version" src="https://img.shields.io/npm/v/pi-chrome.svg"></a>
     <a href="./package.json"><img alt="Pi package" src="https://img.shields.io/badge/Pi-package-6f42c1.svg"></a>
     <a href="./package.json"><img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D20.6.0-339933.svg"></a>
     <a href="#validation"><img alt="CI" src="https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg"></a>
     <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
-    <a href="https://github.com/citrolabs/pi-browser-cdp-extension"><img alt="GitHub stars" src="https://img.shields.io/github/stars/citrolabs/pi-browser-cdp-extension.svg?style=social"></a>
+    <a href="https://github.com/citrolabs/pi-chrome"><img alt="GitHub stars" src="https://img.shields.io/github/stars/citrolabs/pi-chrome.svg?style=social"></a>
   </p>
 </div>
 
@@ -17,14 +17,12 @@ The motivation is simple: `pi-coding-agent` is excellent for code work, but it d
 
 This is not a standalone browser testing framework and does not host a daemon. It is a Pi extension that reuses a persistent CDP session inside the Pi process.
 
-中文文档: [README.zh-CN.md](./README.zh-CN.md)
-
 ## Quick Start
 
 ### 1. Install the extension
 
 ```bash
-pi install git:github.com/citrolabs/pi-browser-cdp-extension
+pi install git:github.com/citrolabs/pi-chrome
 ```
 
 For local development:
@@ -53,9 +51,9 @@ Pi will connect to an authorized Chromium browser, drive the page, inspect the r
 
 ## Why not just web search?
 
-Web-search tools help Pi find and summarize information. `pi-browser-cdp-extension` gives Pi hands-on control of a real Chromium browser, so it can complete tasks that search/fetch tools cannot represent as plain text.
+Web-search tools help Pi find and summarize information. `pi-chrome` gives Pi hands-on control of a real Chromium browser, so it can complete tasks that search/fetch tools cannot represent as plain text.
 
-| Capability | `pi-web-access` / `@ollama/pi-web-search` | `pi-browser-cdp-extension` |
+| Capability | `pi-web-access` / `@ollama/pi-web-search` | `pi-chrome` |
 | --- | --- | --- |
 | Search the public web | Strong fit | Not the primary goal |
 | Fetch and summarize static pages | Strong fit | Possible, but usually overkill |
@@ -115,4 +113,4 @@ The shape of this project was inspired by the following work:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=citrolabs/pi-browser-cdp-extension&type=Date)](https://star-history.com/#citrolabs/pi-browser-cdp-extension&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=citrolabs/pi-chrome&type=Date)](https://star-history.com/#citrolabs/pi-chrome&Date)

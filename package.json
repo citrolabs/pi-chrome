@@ -1,16 +1,16 @@
 {
-  "name": "pi-browser-cdp-extension",
+  "name": "pi-chrome",
   "version": "1.1.0",
   "description": "Pi coding-agent extension exposing BrowserCode CDP browser_execute",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/citrolabs/pi-browser-cdp-extension.git"
+    "url": "git+https://github.com/citrolabs/pi-chrome.git"
   },
-  "homepage": "https://github.com/citrolabs/pi-browser-cdp-extension#readme",
+  "homepage": "https://github.com/citrolabs/pi-chrome#readme",
   "bugs": {
-    "url": "https://github.com/citrolabs/pi-browser-cdp-extension/issues"
+    "url": "https://github.com/citrolabs/pi-chrome/issues"
   },
   "keywords": [
     "pi-package",
@@ -22,7 +22,7 @@
     "extensions": [
       "./extensions"
     ],
-    "image": "https://raw.githubusercontent.com/citrolabs/pi-browser-cdp-extension/main/logo.png"
+    "image": "https://raw.githubusercontent.com/citrolabs/pi-chrome/main/logo.png"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
