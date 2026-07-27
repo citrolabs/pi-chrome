@@ -119,4 +119,10 @@ The shape of this project was inspired by the following work:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=citrolabs/pi-chrome-use&type=Date)](https://star-history.com/#citrolabs/pi-chrome-use&Date)
+<a href="https://www.star-history.com/?repos=citrolabs%2Fpi-chrome-use&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=citrolabs/pi-chrome-use&type=Date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=citrolabs/pi-chrome-use&type=Date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=citrolabs/pi-chrome-use&type=Date&legend=top-left" />
+ </picture>
+</a>
