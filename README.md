@@ -1,8 +1,8 @@
 <div align="center">
-  <h1>pi-chrome</h1>
+  <h1>pi-chrome-use</h1>
   <p>A real-browser CDP execution extension for Pi agents.</p>
   <p>
-    <a href="https://www.npmjs.com/package/pi-chrome"><img alt="npm version" src="https://img.shields.io/npm/v/pi-chrome.svg"></a>
+    <a href="https://www.npmjs.com/package/pi-chrome-use"><img alt="npm version" src="https://img.shields.io/npm/v/pi-chrome-use.svg"></a>
     <a href="./package.json"><img alt="Pi package" src="https://img.shields.io/badge/Pi-package-6f42c1.svg"></a>
     <a href="./package.json"><img alt="Node.js" src="https://img.shields.io/badge/node-%3E%3D20.6.0-339933.svg"></a>
     <a href="#validation"><img alt="CI" src="https://img.shields.io/badge/CI-typecheck%20%2B%20tests-brightgreen.svg"></a>
@@ -20,6 +20,12 @@ This is not a standalone browser testing framework and does not host a daemon. I
 ## Quick Start
 
 ### 1. Install the extension
+
+```bash
+pi install npm:pi-chrome-use
+```
+
+From GitHub:
 
 ```bash
 pi install git:github.com/citrolabs/pi-chrome
@@ -51,9 +57,9 @@ Pi will connect to an authorized Chromium browser, drive the page, inspect the r
 
 ## Why not just web search?
 
-Web-search tools help Pi find and summarize information. `pi-chrome` gives Pi hands-on control of a real Chromium browser, so it can complete tasks that search/fetch tools cannot represent as plain text.
+Web-search tools help Pi find and summarize information. `pi-chrome-use` gives Pi hands-on control of a real Chromium browser, so it can complete tasks that search/fetch tools cannot represent as plain text.
 
-| Capability | `pi-web-access` / `@ollama/pi-web-search` | `pi-chrome` |
+| Capability | `pi-web-access` / `@ollama/pi-web-search` | `pi-chrome-use` |
 | --- | --- | --- |
 | Search the public web | Strong fit | Not the primary goal |
 | Fetch and summarize static pages | Strong fit | Possible, but usually overkill |
